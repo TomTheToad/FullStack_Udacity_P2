@@ -1,22 +1,26 @@
 #!/usr/bin/env python
 # 
 # tournament.py -- implementation of a Swiss-system tournament
+# Created by Victor Asselta
+# written for project2 in Udacity's Full Stack NanoDegree
+# Please see the accompanying README file.
+# This file represents an attempt to satisfy all extra credit and
+# some areas of my own interest.
 #
 
 import math
-# import DB_Handler
-
 from random import randint
 from DB_Handler import *
-# from builtins import True
 
+# Used to call an instance of DB_Handler and set some basic parameters for the connection
 def connect():
     DB = DB_Handler()
     DB.dbname = 'tournament'
     DB.tourID = '1'
     
     return DB
-    
+
+# Fetches a previous created view used for updating player statistics.    
 def fetchResultsView():
     
     DB = connect()
@@ -26,13 +30,13 @@ def fetchResultsView():
     
     return results
 
+# Uses the above view to update tournament statistics for wins, losses, matches played, and points
 def updateTourStats(tourID = '1'):
     playerStats = fetchResultsView()
 
     for stats in playerStats:
         
         # Extrapolate player statistics from dictionary.
-        print("Stats = " +str(stats))
         playerID = stats[2]
         points = str(stats[5])
         
@@ -43,9 +47,8 @@ def updateTourStats(tourID = '1'):
         else:
             win = '0'
             loss = '1'
-    
-        print(playerID, points, win, loss)
-        
+            
+        # Database Handler calls
         DB = connect()
         DB.tableName = ('tournament_players',)
         DB.restrict = True
@@ -58,15 +61,21 @@ def updateTourStats(tourID = '1'):
         DB.update(data)  
 #         queryContent = "UPDATE tournament_players SET matches_played = matches_played + 1," \
 #             " match_wins = match_wins + {}, match_losses = match_losses + {}, tour_points = tour_points + {} WHERE tour_id = {} AND player_id = {}".format(win,loss,points,t_ID,playerID)
-    
+
+# Next version method for updating players globl statistcis form multiple tournaments.
+# I've elected to not include this because the assignment requires the deletion of player records
+# and it I did not want players of the same name constantly being created in the players table.
+# That being said, it would have no effect other than creating a mess.    
 def updateGlobalStats():
     pass
     
-    
+# Method that creates the next set of matches
+# Requires player1, player2 which the match contestants, the current tournament id (tourID) and the round (tour_round)
 def createMatches(player1, player2, tourID='1', tour_round = '1'):
     
-    if player2 == "bye":
-        player2 = None
+# Next version, allows for testing for None so bye need not have a player ID
+#     if player2 == "bye":
+#         player2 = None
     
     DB = connect()
     DB.tableName = ('match_pairings',)
@@ -77,7 +86,8 @@ def createMatches(player1, player2, tourID='1', tour_round = '1'):
     DB.create(values, data)
 #     queryContent = "INSERT INTO match_pairings (tour_id, player1, player2, round)" \
 #             " VALUES({},{},{},{})".format(tourID, player1, player2, tour_round)
-            
+
+# A method used in testing to clear data related to default tournament 1 used for the assignment.           
 def clearTestData():
     
     DB = connect()
@@ -88,6 +98,7 @@ def clearTestData():
 #     queryContent1 = "DELETE FROM match_pairings WHERE tour_id = 1"
 #     queryContent2 = "DELETE FROM tournament_players WHERE tour_id = 1"
 
+# Deletes all matches
 def deleteMatches(tourID='1'):
     """Remove all the match records from the database."""
     
@@ -101,6 +112,7 @@ def deleteMatches(tourID='1'):
 
     print('All matches for tournament {} have been removed').format(tourID)
     
+# Deletes all players and their global statistics from players table
 def deletePlayerRegistry():
     DB = connect()
     
@@ -109,7 +121,7 @@ def deletePlayerRegistry():
 
     print("All player records have been deleted form the registry")
     
-
+# Deletes all players from a particular tournament. Accepts a tournament id.
 def deletePlayers(tourID='1'):
     """Remove all the player records from the database."""
 
@@ -124,6 +136,8 @@ def deletePlayers(tourID='1'):
     deleteMatches()
     deletePlayerRegistry()
 
+# Method to return a count of the number of players registered for a tournament.
+# Accepts one default argument for current tournament (tourID)
 def countPlayers(tourID='1'):
     """Returns the number of players currently registered."""
 
@@ -137,6 +151,7 @@ def countPlayers(tourID='1'):
     print("Total number of Players = " + str(results[0][0]))
     return results[0][0] 
 
+# Add a player, argument (name), to the global players table 'players'
 def createPlayer(name):
     
     DB = connect()
@@ -147,6 +162,7 @@ def createPlayer(name):
     del(DB.tableName)
     return results
 
+# Adds a player to the default tournament per assignment requirements described below.
 def registerPlayer(name):
     """Adds a player to the players table in the tournament database.
        This will probably need to be updated to include the tournamentPlayers table as well for
@@ -169,6 +185,7 @@ def registerPlayer(name):
 
     DB.create(values, data)
 
+# As below but included a default tournament ID related to the assignment
 def playerStandings(tourID = '1'):
     """Returns a list of the players and their win records, sorted by wins.
 
@@ -202,7 +219,8 @@ def playerStandings(tourID = '1'):
 #     
     return results
     
-
+# Takes two arguments and returns one to represent winner.
+# This would need to be updated to allow for multiple contestants.
 def whoWonGenerator(p1, p2):
     winner = randint(1, 2)
     
@@ -210,7 +228,8 @@ def whoWonGenerator(p1, p2):
         return p1
     else:
         return p2
-    
+
+# This would be used to determine the number of rounds necessary to determine a winner
 def numberRounds(tourID='1'):
     numPlayers = countPlayers()
     numberRounds = math.log2(numPlayers)
@@ -219,6 +238,8 @@ def numberRounds(tourID='1'):
     
     return numberRounds
 
+# Reports the results of an individual match.
+# Takes 4 arguments, 2 players (winner and loser) and 2 default arguments for the tournament id and round.
 def reportMatch(winner, loser, tourID = '1', tour_round='1'):
     """Records the outcome of a single match between two players.
 
@@ -226,6 +247,7 @@ def reportMatch(winner, loser, tourID = '1', tour_round='1'):
       winner:  the id number of the player who won
       loser:  the id number of the player who lost
     """
+    # Populates the match_pairings table for use in swiss pairings.
     createMatches(winner, loser)
     
     DB = connect()
@@ -261,7 +283,8 @@ def reportMatch(winner, loser, tourID = '1', tour_round='1'):
     
     DB.create(values, lose_data)
     
-    
+# Test to determine if a number is odd.
+# Allows for the creation of bye rounds if necessary.   
 def isOdd(value):
     if value % 2 == 0:
         return False
@@ -285,7 +308,7 @@ def swissPairings(tourID='1'):
         name2: the second player's name
     """
     
-    #TEMP FIX, need to figure out when/how to update standing
+    #TEMP FIX, need to figure out when/how to update standings
     updateTourStats()
     
     DB = connect()
@@ -315,6 +338,8 @@ def swissPairings(tourID='1'):
     match = 1
     matchList = []
     
+    # Logic to both create matches based on the order returned(by points) and create bye rounds and record accordingly.
+    # The pairings are arranged by points to allow for similar player abilities.
     while i < regPlayerCount:
         print "match {} : contestants {} and {}".format(str(match), str(regPlayerInfo[i - 1][0]), str(regPlayerInfo[i][0]))
         matchList.append((regPlayerInfo[i - 1][0],regPlayerInfo[i - 1][2],regPlayerInfo[i][0],regPlayerInfo[i][2]))

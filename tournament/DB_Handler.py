@@ -1,14 +1,33 @@
+#!/usr/bin/env python
+# 
+# DB_Handler.py
+# created by Victor Asselta
+# written for project2 in Udacity's Full Stack NanoDegree
+# This file represents a study in creating a generic database handler.
+# This was not a course requirement but my attempt to push further into
+# the python language. It's a study in generics, decorators, classes,
+# and complex string formatting in python.
+#
+# Some ideas to make this a more efficient file for postgresql database access:
+# 1) Add a connection timer and reset it each time a query was launched
+# 2) If connection timer timed out, reset connection if request is made.
+# This would allow multiple queries with set parameters without repetition.
+# This file is built with this in mind but currently will lose params with each query.
+#
 
 # Class currently just uses PostGreSQL python connection
 import psycopg2
 
-# Class which enables more efficient, hopefully, database access
+# Class which enables more, hopefully, efficient database access
 # for project 2 of Udacity Full Stack Nanodegree.
 class DB_Handler(object):
     
     #Getters, Setters
+    # These decorators are used to build various aspects of the query statements.
+    # Some parameters use True False arguments as this seemed intuitive.
+    # They may be removed in the future if unnecessary.
     
-    # Database name dbname
+    # Database name dbname, set the database name to connect to.
     @property    
     def dbname(self):
         return self.properties.get('dbname', 'tournament')
@@ -21,7 +40,8 @@ class DB_Handler(object):
     def dbname(self):
         del self.properties['dbname']
     
-    # Tour ID number tourID
+    # Tour ID number tourID, set the current tournament ID
+    # This may become redundant.
     @property    
     def tourID(self):
         return self.properties.get('tourID', '1')
@@ -48,6 +68,7 @@ class DB_Handler(object):
         del self.properties['tableName']
         
     # Use restriction or not boolean restrict
+    # True or False: use WHERE clauses
     @property    
     def restrict(self):
         return self.properties.get('restrict', None)
@@ -60,7 +81,8 @@ class DB_Handler(object):
     def restrict(self):
         self.properties['restrict'] = None
     
-    # list of WHERE clause restrictions restrictWhere  
+    # list the WHERE clause restrictions restrictWhere
+    # Can be kept but not used by setting restrict to False 
     @property    
     def restrictWhere(self):
         return self.properties.get('restrictWhere', None)
@@ -189,6 +211,8 @@ class DB_Handler(object):
         return psycopg2.connect(connectionString)
     
     # Cursor call for queries
+    # Currently also closes the connection
+    # Necessary until connection management is added.
     def cursor(self, query):
         DB = self.connect()
         cursor = DB.cursor()
@@ -208,7 +232,7 @@ class DB_Handler(object):
         DB.close()
         
     # Checks to see if restrictions are desired and iterates through the restricWhere list
-    # to add if necessary.
+    # to add if necessary. Accepts an argument for the current query build and uses properties restrict and restrictWhere.
     def checkForRestrictions(self, preQueryContent):
         
         if self.restrict == True:
@@ -223,6 +247,8 @@ class DB_Handler(object):
         
         return preQueryContent
     
+    # Adds the table names to the queries. Allows for mutlipe table names
+    #Accepts an argument for the current query build and uses property tableName.
     def setTables(self, preQueryContent):
         
         # i is not used however is necessary for count_Where to work properly
@@ -234,6 +260,8 @@ class DB_Handler(object):
         
         return preQueryContent
     
+    # Adds fields for selection. Allows for mutliple fields.
+    #Accepts an argument for the current query build and uses property select.
     def setSelect(self, preQueryContent):
         print(self.properties)
         # i is not used however is necessary for count_Where to work properly
@@ -244,7 +272,10 @@ class DB_Handler(object):
                 preQueryContent += self.properties['select'][count_WHERE] + ", "
         
         return preQueryContent
-    
+
+    # Checks for the presence of added query conditions such as settings multiple tables fields to equal each other.
+    # Allows multiple conditions to be added.
+    # Accepts an argument for the current query build and uses property queryConditions.
     def checkQueryConditions(self, preQueryContent):
         if self.queryConditions != False:
             # i is not used however is necessary for count_Where to work properly
@@ -255,15 +286,18 @@ class DB_Handler(object):
                     preQueryContent += self.properties['queryConditions'][count_WHERE][0] + " = " + str(self.properties['queryConditions'][count_WHERE][1])  + ", "
         return preQueryContent
     
+    # Checks for and allows the used of ORDER BY statments in the current query.
+    # Accepts an argument for the current query build and uses property orderBy.
     def checkForOrderBy(self, preQueryContent):
         if self.properties['orderBy'] != False:
             preQueryContent += " ORDER BY " + self.properties['orderBy']
             
         return preQueryContent
         
-    #CRUD Create, Read, Update, and Delete query creation methods to follow
+    #CRUD Create, Read, Update, and Delete query creation methods
+    # The following allow for the 4 basic sql database actions.
     
-    # Create: build INSERT query from args: insert_values tuple and insert_data tuple
+    # Create: build INSERT query from args: insert_values tuple (fields to affect) and insert_data tuple (data to insert)
     # Possibly switch values and data to decorator property?
     def create(self, insert_values, insert_data):
         
@@ -290,7 +324,7 @@ class DB_Handler(object):
         results = self.cursor(queryContent)
         return results
     
-    # Read: build READ query, can be run with restrictions if desired
+    # Read: build READ query, can be run with various restrictions and other parameters if desired
     def read(self):
         
         if self.properties['multiSelect'] == True:
@@ -316,7 +350,7 @@ class DB_Handler(object):
         
         return results
         
-    # Update: build UPDATE query, can be run with restriction is desired
+    # Update: build UPDATE query, can be run with restriction and other parameters if desired
     def update(self, set_data):
         
         queryContent1 = "UPDATE "
@@ -341,7 +375,7 @@ class DB_Handler(object):
         results = self.cursor(queryContent4)
         return results
     
-    # Delete: build DELETE query, can be run with restrictions if desired
+    # Delete: build DELETE query, can be run with restrictions and other parameters if desired
     def delete(self):
          
         queryContent1 = "DELETE FROM "
