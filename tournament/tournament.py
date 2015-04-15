@@ -4,61 +4,60 @@
 #
 
 import math
-import psycopg2
+# import DB_Handler
+
 from random import randint
+from DB_Handler import *
+# from builtins import True
 
 def connect():
-    """Connect to the PostgreSQL database.  Returns a database connection."""
-    return psycopg2.connect("dbname=tournament")
-    print("Tournament database connection established.")
+    DB = DB_Handler()
+    DB.dbname = 'tournament'
+    DB.tourID = '1'
+    
+    return DB
     
 def fetchResultsView():
     
-    queryContent = "SELECT * FROM match_pairings_results;"
-    
     DB = connect()
-    cursor = DB.cursor()
-    
-    cursor.execute(queryContent)
-    results = cursor.fetchall()
-    
-    DB.commit()
-    DB.close()
+    DB.tableName = ('match_pairings_results',)
+    DB.queryReturn = True
+    results = DB.read()
     
     return results
 
 def updateTourStats(tourID = '1'):
     playerStats = fetchResultsView()
-    
-    DB = connect()
-    cursor = DB.cursor()
 
-    for counter, r in enumerate(playerStats):
+    for stats in playerStats:
         
-        print counter
-    
         # Extrapolate player statistics from dictionary.
-        t_ID = tourID
-        playerID = playerStats[counter][2]
-        points = playerStats[counter][5]
+        print("Stats = " +str(stats))
+        playerID = stats[2]
+        points = str(stats[5])
         
         # Test to see if player won or lost this match.
-        if playerStats[counter][3] == True:
-            win = 1
-            loss = 0
+        if stats[3] == True:
+            win = '1'
+            loss = '0'
         else:
-            win = 0
-            loss = 1
+            win = '0'
+            loss = '1'
+    
+        print(playerID, points, win, loss)
         
+        DB = connect()
+        DB.tableName = ('tournament_players',)
+        DB.restrict = True
+        DB.restrictWhere = (('tour_id', tourID ), ('player_id', playerID))
+        data = None
+        DB.queryConditions = (('matches_played', 'matches_played + 1'),('match_wins', ('match_wins + ' + win)),('match_losses', ('match_losses + ' + loss)), ('tour_points',('tour_points +' + points)))
         
-        queryContent = "UPDATE tournament_players SET matches_played = matches_played + 1," \
-            " match_wins = match_wins + {}, match_losses = match_losses + {}, tour_points = tour_points + {} WHERE tour_id = {} AND player_id = {}".format(win,loss,points,t_ID,playerID)
-
-        print(queryContent)
-
-        cursor.execute(queryContent)
-        DB.commit()
-    DB.close()
+#         data = (('matches_played', 'matches_played + 1'),('match_wins', ('match_wins + ' + win)),('match_losses', ('match_losses + ' + loss)), ('tour_points',('tour_points +' + points)))
+        
+        DB.update(data)  
+#         queryContent = "UPDATE tournament_players SET matches_played = matches_played + 1," \
+#             " match_wins = match_wins + {}, match_losses = match_losses + {}, tour_points = tour_points + {} WHERE tour_id = {} AND player_id = {}".format(win,loss,points,t_ID,playerID)
     
 def updateGlobalStats():
     pass
@@ -69,62 +68,44 @@ def createMatches(player1, player2, tourID='1', tour_round = '1'):
     if player2 == "bye":
         player2 = None
     
-    queryContent = "INSERT INTO match_pairings (tour_id, player1, player2, round)" \
-            " VALUES({},{},{},{})".format(tourID, player1, player2, tour_round)
-            
     DB = connect()
-    cursor = DB.cursor()
+    DB.tableName = ('match_pairings',)
     
-    cursor.execute(queryContent)
+    values = ('tour_id', 'player1', 'player2', 'round')
+    data = (tourID, player1, player2, tour_round)
     
-    DB.commit()
-    DB.close()
-
+    DB.create(values, data)
+#     queryContent = "INSERT INTO match_pairings (tour_id, player1, player2, round)" \
+#             " VALUES({},{},{},{})".format(tourID, player1, player2, tour_round)
+            
 def clearTestData():
     
     DB = connect()
-    cursor = DB.cursor()
+    DB.tableName = ('match_pairings', 'tournament_players')
+    DB.restrict = True
+    DB.restrictWhere = (('tour_id', '1'),)
     
-    queryContent1 = "DELETE FROM match_pairings WHERE tour_id = 1"
-    queryContent2 = "DELETE FROM tournament_players WHERE tour_id = 1"
+#     queryContent1 = "DELETE FROM match_pairings WHERE tour_id = 1"
+#     queryContent2 = "DELETE FROM tournament_players WHERE tour_id = 1"
 
-    cursor.execute(queryContent1)
-    q1Rows = cursor.rowcount
-    print("{} rows deleted").format(q1Rows)
-    
-    cursor.execute(queryContent2)
-    q2Rows = cursor.rowcount
-    print("{} rows deleted").format(q2Rows)
-    
-    DB.commit()
-    DB.close()
-    
 def deleteMatches(tourID='1'):
     """Remove all the match records from the database."""
     
     DB = connect()
-    cursor = DB.cursor()
-    
-    queryContent = "DELETE FROM match_pairings WHERE tour_id = {};".format(tourID)
-    queryContent2 = "DELETE FROM tournament_players WHERE tour_id = {}".format(tourID)
-    
-    cursor.execute(queryContent)
-    cursor.execute(queryContent2)
-
-    DB.commit()
-    DB.close
+    DB.restrict = True
+    DB.restrictWhere = (('tour_id', '1'),)
+    DB.tableName = ('match_pairings',)
+    DB.delete()
+    DB.tableName = ('tournament_players',)
+    DB.delete()
 
     print('All matches for tournament {} have been removed').format(tourID)
     
 def deletePlayerRegistry():
     DB = connect()
-    cursor = DB.cursor()
-
-    queryContent = "DELETE FROM players"
-    cursor.execute(queryContent)
-
-    DB.commit()
-    DB.close()
+    
+    DB.tableName = ('players',)
+    DB.delete()
 
     print("All player records have been deleted form the registry")
     
@@ -133,13 +114,10 @@ def deletePlayers(tourID='1'):
     """Remove all the player records from the database."""
 
     DB = connect()
-    cursor = DB.cursor()
-
-    queryContent = "DELETE FROM tournament_players WHERE tour_id = {};".format(tourID)
-    cursor.execute(queryContent)
-
-    DB.commit()
-    DB.close()
+    DB.tableName = ('tournament_players',)
+    DB.restrict = True
+    DB.restrictWhere = (('tour_ID', tourID),)
+    DB.delete()
 
     print("All player records have been deleted form the tournament")
     
@@ -150,37 +128,26 @@ def countPlayers(tourID='1'):
     """Returns the number of players currently registered."""
 
     DB = connect()
-    cursor = DB.cursor()
+    DB.tableName = ('tournament_players',)
+    DB.restrict = True
+    DB.restrictWhere = (('tour_ID', tourID),)
+    DB.count = True
+    results = DB.read()
 
-    queryContents = "SELECT count(*) FROM tournament_players WHERE tour_id = {};".format(tourID)
-    cursor.execute(queryContents)
-    numPlayers = cursor.fetchone()
-
-    DB.commit()
-    DB.close()
-
-    print("Total number of Players = " + str(numPlayers[0]))
-    return numPlayers[0] 
+    print("Total number of Players = " + str(results[0][0]))
+    return results[0][0] 
 
 def createPlayer(name):
     
     DB = connect()
-    cursor = DB.cursor()
+    DB.tableName = ('players',)
+    DB.queryReturn = True
+    results = DB.create(('name',), (name,))
 
-    
-    playerName = str(name)
-    queryContent = "INSERT INTO players (name) VALUES (%s) RETURNING *"
-    cursor.execute(queryContent, (playerName,))
-    playerInfo = cursor.fetchall()
-    returnValue = [playerInfo[0][0], playerInfo[0][1]]
-    
-    DB.commit()
-    DB.close()
-    
-    return returnValue
+    del(DB.tableName)
+    return results
 
-
-def registerPlayer(name, tourID='1'):
+def registerPlayer(name):
     """Adds a player to the players table in the tournament database.
        This will probably need to be updated to include the tournamentPlayers table as well for
        project testing
@@ -191,23 +158,16 @@ def registerPlayer(name, tourID='1'):
     Args:
       name: the player's full name (need not be unique).
     """
+    newPlayer = createPlayer(name)
+    newPlayerID = newPlayer[0][0]
+
+    values = ('player_id', 'tour_id', 'tour_points')
+    data = (newPlayerID, '1', '0')
+
     DB = connect()
-    cursor = DB.cursor()
+    DB.tableName = ('tournament_players',)
 
-    playerInfo = createPlayer(name)
-    playerID = playerInfo[0]
-    playerName = str(playerInfo[1])
-    
-    
-    queryContent = "INSERT INTO tournament_players (player_id, tour_id, tour_points) VALUES ({},{}, 0);".format(playerID, tourID)
-
-    cursor.execute(queryContent)
-
-    DB.commit()
-    DB.close()
-
-    print("Added Player: " + playerName + " with ID " + str(playerID) + " to registry.")
-
+    DB.create(values, data)
 
 def playerStandings(tourID = '1'):
     """Returns a list of the players and their win records, sorted by wins.
@@ -224,19 +184,22 @@ def playerStandings(tourID = '1'):
     """
     updateTourStats()
     
-    queryContent = "SELECT tournament_players.player_id, players.name, tournament_players.match_wins, " \
-        "tournament_players.matches_played from tournament_players, players where " \
-        "tournament_players.tour_id = {} and tournament_players.player_id = players.id ORDER BY tournament_players.match_wins".format(tourID)
-    
     DB = connect()
-    cursor = DB.cursor()
-    cursor.execute(queryContent)
-    results = cursor.fetchall()
+    DB.tableName = ('tournament_players','players')
+    DB.multiSelect = True
+    DB.select = ('tournament_players.player_id', 'players.name', 'tournament_players.match_wins', 'tournament_players.matches_played')
+    DB.restrict = True
+    DB.restrictWhere = (('tournament_players.tour_id', tourID),)
+    DB.queryReturn = True
+    DB.queryConditions = (('AND tournament_players.player_id','players.id'),)
+    DB.orderBy = 'tournament_players.match_wins'
+    results = DB.read()
+    print(results)
     
-    DB.commit()
-    DB.close()
-    
-    print results
+#     queryContent = "SELECT tournament_players.player_id, players.name, tournament_players.match_wins, " \
+#         "tournament_players.matches_played from tournament_players, players where " \
+#         "tournament_players.tour_id = {} and tournament_players.player_id = players.id ORDER BY tournament_players.match_wins".format(tourID)
+#     
     return results
     
 
@@ -266,11 +229,14 @@ def reportMatch(winner, loser, tourID = '1', tour_round='1'):
     createMatches(winner, loser)
     
     DB = connect()
-    cursor = DB.cursor()
-    queryContent1 = "SELECT * FROM match_pairings WHERE " \
-        "tour_id = {} AND round = {} AND player1 = {} OR player2 = {}".format(tourID,tour_round, winner, winner)
-    cursor.execute(queryContent1)
-    firstQuery = cursor.fetchall()
+    DB.tableName = ('match_pairings',)
+    DB.restrict = True
+    DB.restrictWhere = (('tour_id', tourID),('round', tour_round),('player1', winner))
+    DB.queryConditions = (('OR player2', winner),)
+    firstQuery = DB.read()
+    
+#     queryContent1 = "SELECT * FROM match_pairings WHERE " \
+#         "tour_id = {} AND round = {} AND player1 = {} OR player2 = {}".format(tourID,tour_round, winner, winner)
     
     print firstQuery
     
@@ -278,16 +244,22 @@ def reportMatch(winner, loser, tourID = '1', tour_round='1'):
     
     print("Match ID = {}").format(matchID)
     
-    if loser == "bye":
-        queryContent2 = "INSERT INTO match_results (match_id, player_id,is_winner, is_bye, points_awarded) " \
-            "values ({},{}, true, true, 10)".format(matchID, winner)
-    else:
-        queryContent2 = "INSERT INTO match_results (match_id, player_id, is_winner, is_bye, points_awarded) " \
-            "values ({},{}, true, false, 10),({},{}, false, false, 0)".format(matchID, winner, matchID, loser)
+    DB.tableName = ('match_results',)
+    values = ('match_id','player_id','is_winner','is_bye','points_awarded')
     
-    cursor.execute(queryContent2)
-    DB.commit()
-    DB.close()
+    if loser == "bye":
+        win_data = (matchID, winner, True, True, 10)
+#         queryContent2 = "INSERT INTO match_results (match_id, player_id,is_winner, is_bye, points_awarded) " \
+#             "values ({},{}, true, true, 10)".format(matchID, winner)
+    else:
+        win_data = (matchID, winner, True, False, 10)
+#         queryContent2 = "INSERT INTO match_results (match_id, player_id, is_winner, is_bye, points_awarded) " \
+#             "values ({},{}, true, false, 10),({},{}, false, false, 0)".format(matchID, winner)
+    DB.create(values, win_data)
+    
+    lose_data = (matchID, loser, False, False, 0)
+    
+    DB.create(values, lose_data)
     
     
 def isOdd(value):
@@ -315,15 +287,22 @@ def swissPairings(tourID='1'):
     
     #TEMP FIX, need to figure out when/how to update standing
     updateTourStats()
-
-    DB = connect()
-    cursor = DB.cursor()
-
-    queryContent = "select players.id, tournament_players.player_id, players.name, tournament_players.tour_points from players, tournament_players where tour_id = '1' AND players.id = tournament_players.player_id ORDER BY tour_points;".format(tourID)
     
-    cursor.execute(queryContent)
-    regPlayerInfo = cursor.fetchall()
-    regPlayerCount = cursor.rowcount
+    DB = connect()
+    DB.multiSelect = True
+    DB.select = ('players.id', 'tournament_players.player_id', 'players.name', 'tournament_players.tour_points') 
+    DB.tableName = ('players', 'tournament_players')
+    DB.restrict = True
+    DB.restrictWhere = (('tour_id','1'),)
+    DB.queryConditions = (('AND players.id','tournament_players.player_id' ),)
+    DB.orderBy = 'tour_points'
+    regPlayerInfo = DB.read()
+    regPlayerCount = DB.rowCount
+    print("regPlayer info =" + str(regPlayerInfo))
+ 
+#     queryContent = "select players.id, tournament_players.player_id, players.name, tournament_players.tour_points from players, tournament_players where tour_id = '1' AND players.id = tournament_players.player_id ORDER BY tour_points;".format(tourID)
+#     regPlayerInfo = cursor.fetchall()
+#     regPlayerCount = cursor.rowcount
     
     oddNumEntrants = isOdd(regPlayerCount)
     
@@ -348,7 +327,7 @@ def swissPairings(tourID='1'):
             # the following will create an error because bye does not have an id. FIX
             matchList.append((regPlayerInfo[i - 1][0],regPlayerInfo[i - 1][2],'bye','bye'))
         
-    print "Total number of players = {} ".format(regPlayerInfo.__len__())
+    print "Total number of players = {} ".format(regPlayerCount)
     print matchList
     return matchList
     
