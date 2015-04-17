@@ -67,6 +67,7 @@ def updateTourStats(tourID = '1'):
 # and it I did not want players of the same name constantly being created in the players table.
 # That being said, it would have no effect other than creating a mess.    
 def updateGlobalStats():
+    #TODO
     pass
     
 # Method that creates the next set of matches
@@ -308,7 +309,7 @@ def swissPairings(tourID='1'):
         name2: the second player's name
     """
     
-    #TEMP FIX, need to figure out when/how to update standings
+    #Need to figure out when/how to update standings
     updateTourStats()
     
     DB = connect()
