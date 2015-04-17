@@ -1,12 +1,15 @@
 -- Table definitions for the tournament project.
+-- Created by Victor Asselta for Udacity project 2 of the Full Stack Nanodegree
+-- 
+-- The following schema was designed to support multiple tournaments, permanent player records
+-- between tournaments, and an overall points system. It's an attempt to solve the problem
+-- introduced in the project where data is wiped out between rounds yet still allow for
+-- multiple tournaments and overall player standings for a round, tournament, and multiple tournaments.
 --
--- Put your SQL 'create table' statements in this file; also 'create view'
--- statements if you choose to use it.
---
--- You can write comments in this file by starting them with two dashes, like
--- these lines here.
+-- This is the initialization scheme for t
 
--- Player names and sequenced ids, puposely seperated from Player Statistics 1NF,2NF,3NF
+-- Player names and sequenced ids, 1NF,2NF,3NF
+-- Stores Global player data to allow for statistics over the course of many tournaments
 CREATE TABLE players (
 		id SERIAL PRIMARY KEY,
 		name TEXT,
@@ -20,7 +23,7 @@ CREATE TABLE players (
 );
 
 
--- Tournament names and sequenced ids, purposely seperated from Tournament Statistics 1NF, 2NF, 3NF
+-- Tournament names and sequenced ids, to allow for multiple tournaments and statistics 1NF, 2NF, 3NF
 CREATE TABLE tournaments ( 
 		id SERIAL PRIMARY KEY, 
 		name TEXT,
@@ -32,6 +35,7 @@ CREATE TABLE tournaments (
 		num_players INTEGER
 );
 
+-- A link table (tournament & players) for player tournament registration and local statistics
 CREATE TABLE tournament_players ( 
 		player_id INTEGER REFERENCES players(id),
 		tour_id INTEGER REFERENCES tournaments(id),
@@ -42,6 +46,7 @@ CREATE TABLE tournament_players (
 		PRIMARY KEY(tour_id, player_id)
 );
 
+-- Table to store player pairings per rounds. Inluded a serial ID to identify each round uniquely.
 CREATE TABLE match_pairings (
 		id SERIAL PRIMARY KEY,
 		tour_id INTEGER REFERENCES tournaments(id),
@@ -50,7 +55,7 @@ CREATE TABLE match_pairings (
 		round INTEGER
 );
 
-
+-- Table to store match results for unique pairings.
 CREATE TABLE match_results (
 		match_id INTEGER REFERENCES match_pairings(id) ON DELETE CASCADE,
 		player_id INTEGER REFERENCES players(id),
@@ -61,6 +66,7 @@ CREATE TABLE match_results (
 
 );
 
+-- View used to allow for easier statistics updates. (winner, bye round, points, matchid, tourid)
 CREATE VIEW match_pairings_results AS
 		SELECT 
 			mp.tour_id, 
