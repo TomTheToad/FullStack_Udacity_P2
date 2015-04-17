@@ -188,10 +188,7 @@ class DB_Handler(object):
     @orderBy.deleter
     def orderBy(self):
         del self.properties['orderBy']
-        
     
-
-         
     # Class methods
     # initialization: Can configure all properties with included keyword arguments
     def __init__(self, **kwargs):
@@ -217,7 +214,6 @@ class DB_Handler(object):
         DB = self.connect()
         cursor = DB.cursor()
         
-        print(query)
         cursor.execute(query)
         self.properties['rowCount'] = cursor.rowcount
         
@@ -385,4 +381,9 @@ class DB_Handler(object):
         queryContent3 = self.checkForRestrictions(queryContent2) + ";"
         
         self.cursor(queryContent3)
+        
+    # Add the ability to send a complete custom query. A work around for class limits.
+    def customQuery(self, query):
+        
+        self.cursor(query)
         
