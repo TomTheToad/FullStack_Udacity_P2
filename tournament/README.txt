@@ -2,6 +2,10 @@ Tournament Project 2 for Udacity's Full Stack Nanodegree.
 Created by Victor Asselta
 Submitted version 2.1 on April 17th 2015
 
+This folder is contained within a parent folder for the associated Project 2 class.
+I did this as to allow the vagrant config information to exist in the same local
+folder as on my own machine.
+
 
 The Following is an attempt to:
 1) Satisfy the basic requirements for the tournament project
