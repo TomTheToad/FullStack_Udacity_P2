@@ -1,11 +1,33 @@
 Tournament Project 2 for Udacity's Full Stack Nanodegree.
 Created by Victor Asselta
-Submitted version 2.1 on April 17th 2015
+Submitted version 3.1 on May 2, 2015
 
 This folder is contained within a parent folder for the associated Project 2 class.
 I did this as to allow the vagrant config information to exist in the same local
 folder as on my own machine.
 
+Requirements:
+This version has been tested with and is expected to fully function with Python 2.7
+	 and a PostgreSQL database on a linux Ubuntu system.
+
+Files Structure:
+All included in a single directory:
+
+tournament.py
+	The tournament file.
+DB_Handler.py
+	The generic PostgreSQL handler class file
+README.txt
+	This read me file.
+tournament.sql
+	The table and view initialization file
+tournament_version1
+	The first version of the project for comparison purposes only.
+	
+Setup:
+For project testing, nothing other than running the tournament_test.py file should
+be necessary. As per recommendation, the tournament.sql script is automatically called
+and the database should be configured then.
 
 The Following is an attempt to:
 1) Satisfy the basic requirements for the tournament project
@@ -13,26 +35,13 @@ The Following is an attempt to:
 3) Allow the potential expansion into a mutli-tournament, points based
 	system for tracking multiple player careers and allowing for points
 	assignments to vary between matches or tournaments.
-4) To further explore Python decorators, generic classes, complex string
-	manipulation, and other, unexpected problems associated with building
-	a generic python class.
-
-	
-	
-Requirements:
-This version has been tested with and is expected to fully function with Python 2.7
-	 and a PostgreSQL database on a linux Ubuntu system.
-
-	
 	
 Some possible upgrades:
 DB_Handler:
 1) Build connection timers that reset with each query to allow for better
 	connection management and efficiency.
-2) Add a specific operation class to allow for math operations to be performed
-	on the database side more efficiently.
-3) Testing with multiple files needing a database connection to find more requirements
-4) Allow the specification of database initialization file to be run once.
+2) Testing with multiple files needing a database connection to find more requirements
+3) Allow the specification of database initialization file to be run once.
 
 tournament.py:
 1) Testing for null in bye rounds.
@@ -54,23 +63,50 @@ tournament.py:
 	
 
 
-Files Structure:
-All included in a single directory:
 
-tournament.py
-	The tournament file.
-DB_Handler.py
-	The generic PostgreSQL handler class file
-README.txt
-	This read me file.
-tournament.sql
-	The table and view initialization file
-tournament_version1
-	The first version of the project for comparison purposes only.
 	
+Notes on this version 3.1: (current version)
+I decided to follow as many of the recommendations of the assessment as possible with
+one notable exception. I did not combine the match_pairings and match_results tables.
+
+The combination of these two tables would mean the loss of generating the match pairings prior
+to actually running the matches. The interface allows for viewing the next round of matches
+is based on the previous results. I also needed the unique match id's for match_results table
+normalization.
+
+Having pointed that out, I think that most all the other recommendation where put into place.
+
+Everything was greatly simplified.
+The DB_Handler class was completely rewritten to remove the complicated query building process.
+I learned a great deal building this class and will keep developing it on my own. The idea was
+to explore one possible starting point for creating ORM like functionality. It is largely
+academic and is not being developed for ease of use so I removed that functionality from this
+assignment.
+
+A number of table columns were dropped due to redundancy or not being currently utilized.
+
+Views were substituted for complex and redundant queries.
+
+Bleach was added for a layer of security to DB_Handler. Although I'm not sure if it's really
+appropriate.
+
+The standard table query was altered significantly. Here's an example:
+
+This is mostly straight forward query with formating:
+	queryContent = "INSERT INTO tournaments (name) VALUES {}".format(tournamentName)
 	
+Here's an altered query for added sequrity using a string reassignment:
+
+    t_name = "'" + str(tournamentName) + "'"
+    queryContent = 'INSERT INTO tournaments (name) VALUES (%s);' % (t_name)
+    
+This formating was a further attempt to protect from SQL injection as requested and was
+adapted from recommendations on stackoverflow.com
+http://stackoverflow.com/questions/1466741/parameterized-queries-with-psycopg2-python-db-api-and-postgresql
+
+
 	
-Notes on this version:
+Notes on version 2.1: (previous version for comparison)
 This is version 2.1 of both the tournament.py file and the DB_Handler.py class.
 I've decided to include my personal thoughts on this project and why I decided
 to go in this direction.
