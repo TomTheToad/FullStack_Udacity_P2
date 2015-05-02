@@ -113,8 +113,6 @@ def createMatches(player1, player2, tourID='1', tour_round = '1'):
     queryContent = "INSERT INTO match_pairings (tour_id, player1, player2, round)" \
             " VALUES(%s)" % (values)
             
-    print(queryContent)
-    
 #     queryContent = "INSERT INTO match_pairings (tour_id, player1, player2, round)" \
 #             " VALUES({},{},{},{})".format(tourID, player1, player2, tour_round)
             
