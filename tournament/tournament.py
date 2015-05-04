@@ -26,6 +26,7 @@ runInit = True
 # and create it if not.
 
 
+# Call to attempt to create the tournament database if does not exist
 def __createDB():
 
     try:
@@ -39,6 +40,7 @@ def __createDB():
               "README.txt file")
 
 
+# Calls __createDB() and attempts to populate the tournament database
 def __initializeDB():
     print("Database Initialization called")
 
@@ -49,7 +51,6 @@ def __initializeDB():
 
     # Attempt to call tournament.sql script file to
     # initialize tournament database
-
     if os.path.exists("tournament.sql"):
         scriptPath = os.path.realpath("tournament.sql")
 
@@ -74,6 +75,10 @@ def connect(query):
     DB = DB_Handler()
     DB.dbname = 'tournament'
 
+    # Agreed that the use of a global is a bad idea.
+    # Convert this whole file to class in next version.
+    # Will have to rewrite the tournament_test.py file
+    # to allow for class creation.
     global runInit
 
     # Check for first run condition

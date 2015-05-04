@@ -33,7 +33,7 @@ be necessary.
 I've included an added feature which, hopefully, should create the database and then
 call the tournament.sql file to populate it.
 
-There are several reasons why this could fail. Primary because of differences between
+There are several reasons why this could fail. Primarily because of differences between
 system file locations. If this fails please run the following within the vagrant/tournament/
 directory:
 
