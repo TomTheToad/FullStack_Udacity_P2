@@ -1,6 +1,6 @@
 Tournament Project 2 for Udacity's Full Stack Nanodegree.
 Created by Victor Asselta
-Submitted version 3.1 on May 2, 2015
+Submitted version 3.2 on May 4, 2015
 
 This folder is contained within a parent folder for the associated Project 2 class.
 I did this as to allow the vagrant config information to exist in the same local
@@ -8,7 +8,9 @@ folder as on my own machine.
 
 Requirements:
 This version has been tested with and is expected to fully function with Python 2.7
-	 and a PostgreSQL database on a linux Ubuntu system.
+	 and a PostgreSQL database on a linux Ubuntu system. The tournament.py file 
+	 requires the existence of the database tournament. The database also needs to be
+	 populated with the appropriate table content.
 
 Files Structure:
 All included in a single directory:
@@ -26,9 +28,26 @@ tournament_version1
 	
 Setup:
 For project testing, nothing other than running the tournament_test.py file should
-be necessary. As per recommendation, the tournament.sql script is automatically called
-and the database should be configured then.
+be necessary. 
 
+I've included an added feature which, hopefully, should create the database and then
+call the tournament.sql file to populate it.
+
+There are several reasons why this could fail. Primary because of differences between
+system file locations. If this fails please run the following within the vagrant/tournament/
+directory:
+
+1) Create the postgresql tournament database from a command prompt:
+	createdb tournament
+
+2) Populate the new tournament database:
+	Login to the postgresql tournament database
+		psql tournament
+	Run the configuration script
+		\i tournament.sql
+3) Then \q to quit postgresql
+	
+	
 The Following is an attempt to:
 1) Satisfy the basic requirements for the tournament project
 2) Satisfy the extra credit requirements for the tournament project.
