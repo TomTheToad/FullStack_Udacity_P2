@@ -1,6 +1,6 @@
 Tournament Project 2 for Udacity's Full Stack Nanodegree.
 Created by Victor Asselta
-Submitted version 3.2 on May 4, 2015
+Submitted version 3.2.1 on May 4, 2015
 
 This folder is contained within a parent folder for the associated Project 2 class.
 I did this as to allow the vagrant config information to exist in the same local
@@ -38,6 +38,9 @@ system file locations. If this fails please run the following within the vagrant
 directory:
 
 1) Create the postgresql tournament database from a command prompt:
+	a) Drop the tournament database if exists.
+	dropdb tournament
+	b) Create the tournament database
 	createdb tournament
 
 2) Populate the new tournament database:

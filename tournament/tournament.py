@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# version 3.2
+# version 3.2.1
 # tournament.py -- implementation of a Swiss-system tournament
 # Created by Victor Asselta
 # written for project2 in Udacity's Full Stack NanoDegree
@@ -19,7 +19,8 @@ from DB_Handler import DB_Handler
 # Track to see if first run is true for current call
 # Known bug, appears to continue to call with testing.
 # Solution: make tournament.py class in next version and
-# set using decorator.
+# set using decorator. The tournament_test.py would have
+# to be modified to accommodate this.
 runInit = True
 
 # If first run of tournament then check to see if database schema exists
@@ -30,9 +31,19 @@ runInit = True
 def __createDB():
 
     try:
-        scriptReturn = os.system("createdb tournament")
+        dropDBReturn = os.system("dropdb tournament")
 
-        if scriptReturn == 0:
+        if dropDBReturn == 0:
+            print("Tournament database dropped")
+    except:
+        print("Unable to delete database"
+              "Please remove previous"
+              " tournament database")
+
+    try:
+        createDBReturn = os.system("createdb tournament")
+
+        if createDBReturn == 0:
             print("Tournament database created")
     except:
         print("Unable to run system calls. "
@@ -44,6 +55,8 @@ def __createDB():
 def __initializeDB():
     print("Database Initialization called")
 
+    # Check to see if DB needs to be dropped
+    # and recreated
     __createDB()
 
     firstRun = DB_Handler()
@@ -62,7 +75,7 @@ def __initializeDB():
         except:
             print("Tournament Database already exists or there is an error in "
                   "the script file. See README.txt and manually configure if"
-                  "necessary.")
+                  " necessary.")
 
         # Set global runInit to False after database created
         global runInit
